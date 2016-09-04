@@ -1,11 +1,14 @@
 # Install dependencies with Pip.
-puts-cmd "pip install -r requirements.txt"
+puts-cmd "make deps"
 
 [ ! "$FRESH_PYTHON" ] && bpwatch start pip_install
 [ "$FRESH_PYTHON" ] && bpwatch start pip_install_first
 
 set +e
-/app/.heroku/python/bin/pip install -r requirements.txt --exists-action=w --src=./.heroku/src --disable-pip-version-check --no-cache-dir 2>&1 | tee $WARNINGS_LOG | cleanup | indent
+sub-env sh -c 'echo "from buildpack, environment is: $CSA_ENVIRONMENT"'
+PIP_ARGS="--exists-action=w --src=./.heroku/src --disable-pip-version-check --no-cache-dir 2>&1" make deps-no-venv
+PIP_STATUS="${PIPESTATUS[0]}"
+/app/.heroku/python/bin/pip install gunicorn --exists-action=w --src=./.heroku/src --disable-pip-version-check --no-cache-dir 2>&1 | tee $WARNINGS_LOG | cleanup | indent
 PIP_STATUS="${PIPESTATUS[0]}"
 set -e
 
